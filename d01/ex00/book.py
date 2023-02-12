@@ -10,26 +10,28 @@ class Book:
 
     def __str__(self):
         """Return the string to print with the recipe info"""
-        txt = self.name + " Cookbook :\n"
-        + "Creation date: " + self.creation_date
-        + "\nLast update: " + self.last_update
-        + "\nRecipes: \n"
-        + "  Starters: " + self.recipe_list["starter"]
-        + "\n  Lunch: " + self.recipe_list["lunch"]
-        + "\n  Desserts: " + self.recipe_list["dessert"]
-        print(txt)
+        txt = "\n" + self.name + " Cookbook :" \
+        + "\nCreation date: " + str(self.creation_date) \
+        + "\nLast update: " + str(self.last_update) \
+        + "\nRecipes:\n"
+        for type in self.recipe_list.keys():
+            txt += "\n  " + type + ":\n"
+            for recipe in self.recipe_list[type]:
+                txt += str(recipe)
         return txt
 
     def get_recipe_by_name(self, name):
         """Prints a recipe with the name \texttt{name} and returns the instance"""
         if not isinstance(name, str):
             print("Error: not a valid name")
+            return None
         else:
             for cat in self.recipe_list.values():
                 for recipe in cat:
-                    if recipe == name:
+                    if recipe.name == name:
                         print(recipe)
                         return recipe
+        print("Recipe name not found in " + self.name + " cookbook!")
 
     def get_recipes_by_types(self, recipe_type):
         """Get all recipe names for a given recipe_type """
@@ -47,8 +49,7 @@ class Book:
         """Add a recipe to the book and update last_update"""
         if not isinstance(recipe, Recipe):
             print("Invalid recipe: is not an instance of Recipe!")
-            return
-        if recipe.recipe_type in self.recipe_list:
+        elif recipe.recipe_type in self.recipe_list:
             self.recipe_list[recipe.recipe_type].append(recipe)
             self.last_update = datetime.now()
         else:
