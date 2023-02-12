@@ -5,14 +5,6 @@ class GotCharacter:
         self.first_name = first_name
         self.is_alive = is_alive
 
-    @property
-    def __dict__(self):
-        return "\nFirst name: " + self.first_name \
-        + "\nFamily name: " + self.family_name \
-        + "\nHouse words: " + self.house_words \
-        + "\nVital informations: " + ("En vie" if self.is_alive else "Mort(e)")
-        + "\n"
-
     def print_house_words(self):
         print(self.house_words)
 
