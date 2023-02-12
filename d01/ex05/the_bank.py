@@ -1,5 +1,6 @@
-class Account(object):
+import time
 
+class Account(object):
     ID_COUNT = 1
 
     def __init__(self, name, **kwargs):
@@ -18,107 +19,357 @@ class Account(object):
         self.value += amount
 
 class Bank(object):
-    """The bank"""
-
     def __init__(self):
         self.accounts = []
 
     def add(self, new_account):
-        """ Add new_account in the Bank
-        @new_account: Account() new account to append
-        @return True if success, False if an error occured
-        """
         if not isinstance(new_account, Account):
             raise TypeError("Error: Bank: add(): Invalid new_account type.")
+        if not hasattr(new_account, 'name'):
+            raise Exception("Error: Bank: add(): No attribute name found.")
         for account in self.accounts:
             if account.name == new_account.name:
                 raise Exception("Error: Bank: add(): Account name already exist.")
+        print(new_account.name + ' successfully added.')
         self.accounts.append(new_account)
 
     def is_corrupted(self, account):
-        if len(account.__dict__) % 2 == 0:
+        if len(dir(account)) % 2 == 0:
+            print("Error: Bank: is_corrupted(): Even number of attr.")
             return True
         if not hasattr(account, 'name')\
         or not hasattr(account, 'id')\
         or not hasattr(account, 'value'):
+            print("Error: Bank: is_corrupted(): name, id, or value not found.")
             return True
         if not isinstance(account.name, str)\
         or not isinstance(account.id, int)\
         or not isinstance(account.value, (float, int)):
+            print("Error: Bank: is_corrupted(): Invalid attr type.")
             return True
         check = {'zip': False, 'addr': False}
-        for key in account.__dict__.keys():
-            if key.startswith('zip'):
+        for attr in dir(account):
+            if attr.startswith('zip'):
                 check['zip'] = True
-            if key.startswith('addr'):
+            if attr.startswith('addr'):
                 check['addr'] = True
-            if key.startswith('b'):
+            if attr.startswith('b'):
+                print("Error: Bank: is_corrupted(): attr starting with 'b'.")
                 return True
         if not check['zip']:
+            print("Error: Bank: is_corrupted(): 'zip' not found.")
             return True
         if not check['addr']:
+            print("Error: Bank: is_corrupted(): 'addr' not found.")
             return True
         return False
 
     def transfer(self, origin, dest, amount):
-        """" Perform the fund transfer
-        @origin: str(name) of the first account
-        @dest: str(name) of the destination account
-        @amount: float(amount) amount to transfer
-        @return True if success, False if an error occured
-        """
-        origin = [x for x in self.accounts if x.name == origin][0]
-        dest = [x for x in self.accounts if x.name == dest][0]
-        if not origin or not dest:
+        origin = [x for x in self.accounts if hasattr(x, 'name') and x.name == origin]
+        dest = [x for x in self.accounts if hasattr(x, 'name') and x.name == dest]
+        if len(origin) == 0 or len(dest) == 0:
+            print("Error: Bank: transfer(): Account not found.")
             return False
-        if amount < 0 or amount > origin.value:
+        if self.is_corrupted(origin[0]) or self.is_corrupted(dest[0]):
+            print("Error: Bank: transfer(): Account corrupted.")
             return False
-        if self.is_corrupted(origin) or self.is_corrupted(dest):
+        if amount < 0 or amount > origin[0].value:
+            print("Error: Bank: transfer(): Invalid amount.")
             return False
-        origin.transfer(-amount)
-        dest.transfer(amount)
+        origin[0].transfer(-amount)
+        dest[0].transfer(amount)
+        print(origin[0].name + ' has sent ' + str(amount) + '$ to ' + dest[0].name)
         return True
 
     def fix_account(self, name):
-        """ fix account associated to name if corrupted
-        @name: str(name) of the account
-        @return True if success, False if an error occured
-        """
         if not isinstance(name, str):
+            print("Error: Bank: fix_account(): name is not a str.")
             return False
-        account = [x for x in self.accounts if x.name == name][0]
-        if not account:
+        account = [x for x in self.accounts if hasattr(x, 'name') and x.name == name]
+        if len(account) == 0:
+            print("Error: Bank: fix_account(): Account not found.")
             return False
-        if not hasattr(account, 'name'):
-            account.__dict__['name'] = 'Account_' + str(account.id)
+        account = account[0]
         if not hasattr(account, 'id'):
-            account.__dict__['id'] = Account.ID_COUNT
+            account.id = Account.ID_COUNT
             Account.ID_COUNT += 1
+        if not hasattr(account, 'name'):
+            account.name = 'Account_' + str(account.id) + '_recovery'
         if not hasattr(account, 'value'):
-            account.__dict__['value'] = 0
+            account.value = 0
         check = {'zip': False, 'addr': False}
-        for key in list(account.__dict__.keys()):
-            if key.startswith('zip'):
+        for attr in dir(account):
+            if attr.startswith('zip'):
                 check['zip'] = True
-            if key.startswith('addr'):
+            if attr.startswith('addr'):
                 check['addr'] = True
-            if key.startswith('b'):
-                account.__dict__.pop(key)
+            if attr.startswith('b'):
+                delattr(account, attr)
         if not check['zip']:
-            account.__dict__['zip'] = '75017'
+            account.zip = ''
         if not check['addr']:
-            account.__dict__['addr'] = '96 Boulevard Bessieres'
-        lst = ['name', 'id', 'value']
-        if len(account.__dict__) % 2 == 0:
-            for key in account.__dict__.keys():
-                if key not in lst and not key.startswith('zip') and not key.startswith('addr'):
-                    account.__dict__.pop(key)
-                    break
+            account.addr = ''
+        if len(dir(account)) % 2 == 0:
+            account.__dict__['fix_even_attr_' + str(int(time.time()))] = 'attr balanced'
         return False if self.is_corrupted(account) else True
 
 if __name__ == "__main__":
 
-    print("\n1. First test main")
+    acc_valid_1 = Account('Sherlock Holmes',
+                          zip='NW1 6XE',
+                          addr='221B Baker street',
+                          value=1000.0)
+    acc_valid_2 = Account('James Watson',
+                          zip='NW1 6XE',
+                          addr='221B Baker street',
+                          value=25000.0)
+    invalid_even = Account("invalid_even",
+                           zip='42',
+                           do='',
+                           addr='boulevard bessieres',
+                           value=42)
+    invalid_b = Account("invalid_b",
+                        zip='1',
+                        addr='Mexico',
+                        value=42,
+                        do='',
+                        battr=42)
+    invalid_nozip = Account("invalid_nozip",
+                            addr='Somewhere in the Milky Way',
+                            do='',
+                            value=42)
+    invalid_noaddr = Account("invalid_noaddr",
+                             zip='2',
+                             do='',
+                             value=42)
+    invalid_novalue = Account("invalid_novalue",
+                              value=42,
+                              zip='1',
+                              do='',
+                              addr='Mexico')
+    invalid_noid = Account("invalid_id",
+                           value=42,
+                           do='',
+                           zip='1',
+                           addr='Mexico')
+    invalid_noname = Account("invalid_noname",
+                             value=42,
+                             do='',
+                             zip='1',
+                             addr='Mexico')
+
+    # add()
+    print("\n1. Adding accounts to bank")
+    bank = Bank()
+
+    print("\n1.1 Valid cases")
+    bank.add(acc_valid_1)
+    bank.add(acc_valid_2)
+    bank.add(invalid_even)
+    bank.add(invalid_b)
+    bank.add(invalid_nozip)
+    bank.add(invalid_noaddr)
+    bank.add(invalid_novalue)
+    bank.add(invalid_noname)
+    bank.add(invalid_noid)
+    delattr(invalid_noname, 'name')
+    delattr(invalid_novalue, 'value')
+    delattr(invalid_noid, 'id')
+    for account in bank.accounts:
+        print(account.__dict__)
+
+    print("\n1.2 invalid cases")
+    try:
+        bank.add(42.0)
+        print("Input accepted: fail.")
+    except Exception as e:
+        print("Error catched: success: " + str(e))
+    try:
+        bank.add(acc_valid_1)
+        print("Input accepted: fail.")
+    except Exception as e:
+        print("Error catched: success: " + str(e))
+
+
+    # transfer()
+    print("\n2. Tranfer()")
+
+    print("\n2.1 origin or dest not an account")
+    if bank.transfer('Sherlock Holmes', 'BLA', 500.0) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+    if bank.transfer('BLA', 'Sherlock Holmes', 500.0) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.2 Negative amount")
+    if bank.transfer('James Watson', 'Sherlock Holmes', -42) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.3 Bank account too low")
+    if bank.transfer('James Watson', 'Sherlock Holmes', 42000) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.4 Invalid: even number of attr")
+    if bank.transfer('invalid_even', 'Sherlock Holmes', 1) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.5 Invalid attr starting with 'b'")
+    if bank.transfer('invalid_b', 'Sherlock Holmes', 1) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.6 No zip")
+    if bank.transfer('invalid_nozip', 'Sherlock Holmes', 1) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.7 No addr")
+    if bank.transfer('invalid_noaddr', 'Sherlock Holmes', 1) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.8 No value")
+    if bank.transfer('invalid_novalue', 'Sherlock Holmes', 1) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.9 No name")
+    if bank.transfer('invalid_noname', 'Sherlock Holmes', 1) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.10 No id")
+    if bank.transfer('invalid_id', 'Sherlock Holmes', 1) is False:
+        print("Error catched: success.")
+    else:
+        print("Input accepted: fail.")
+
+    print("\n2.11 Valid transfer")
+    for account in bank.accounts:
+        if hasattr(account, 'name'):
+            if account.name == 'Sherlock Holmes' or account.name == 'James Watson':
+                print(account.__dict__)
+    bank.transfer('Sherlock Holmes', 'James Watson', 500.0)
+    for account in bank.accounts:
+        if hasattr(account, 'name'):
+            if account.name == 'Sherlock Holmes' or account.name == 'James Watson':
+                print(account.__dict__)
+
+    print()
+
+
+    # fix_account()
+    print("\n3. fix_account()")
+
+    print("\n3.1 fix invalid_even account")
+    if bank.fix_account('invalid_even') is True:
+        print("Account fixed: success.")
+    else:
+        print("Account not fixed: fail.")
+
+    print("\n3.2 fix invalid_b account")
+    if bank.fix_account('invalid_b') is True:
+        print("Account fixed: success.")
+    else:
+        print("Account not fixed: fail.")
+
+    print("\n3.3 fix invalid_nozip account")
+    if bank.fix_account('invalid_nozip') is True:
+        print("Account fixed: success.")
+    else:
+        print("Account not fixed: fail.")
+
+    print("\n3.4 fix invalid_noaddr account")
+    if bank.fix_account('invalid_noaddr') is True:
+        print("Account fixed: success.")
+    else:
+        print("Account not fixed: fail.")
+
+    print("\n3.5 fix invalid_novalue account")
+    if bank.fix_account('invalid_novalue') is True:
+        print("Account fixed: success.")
+    else:
+        print("Account not fixed: fail.")
+
+    print("\n3.6 fix invalid_noid account")
+    if bank.fix_account('invalid_id') is True:
+        print("Account fixed: success.")
+    else:
+        print("Account not fixed: fail.")
+
+    print("\n3.7 Invalid parameter name: does not exist")
+    if bank.fix_account('no') is False:
+        print("Account not found: success.")
+    else:
+        print("Account found: fail.")
+
+    print("\n3.7 Invalid parameter name: not a str")
+    if bank.fix_account(42.0) is False:
+        print("Error returned: success.")
+    else:
+        print("No error returned: fail.")
+
+    print()
+
+
+    # transfert() after fix_account()
+    print("\n4. transfert() after fix_account()")
+
+    print("\n4.1 Invalid: even number of attr")
+    if bank.transfer('invalid_even', 'Sherlock Holmes', 1) is False:
+        print("Error catched: fail.")
+    else:
+        print("Input accepted: success.")
+
+    print("\n4.2 Invalid attr starting with 'b'")
+    if bank.transfer('invalid_b', 'Sherlock Holmes', 1) is False:
+        print("Error catched: fail.")
+    else:
+        print("Input accepted: success.")
+
+    print("\n4.3 No zip")
+    if bank.transfer('invalid_nozip', 'Sherlock Holmes', 1) is False:
+        print("Error catched: fail.")
+    else:
+        print("Input accepted: success.")
+
+    print("\n4.4 No addr")
+    if bank.transfer('invalid_noaddr', 'Sherlock Holmes', 1) is False:
+        print("Error catched: fail.")
+    else:
+        print("Input accepted: success.")
+
+    print("\n4.5 No value")
+    if bank.transfer('Sherlock Holmes', 'invalid_novalue', 1) is False:
+        print("Error catched: fail.")
+    else:
+        print("Input accepted: success.")
+
+    print("\n4.6 No id")
+    if bank.transfer('invalid_id', 'Sherlock Holmes', 1) is False:
+        print("Error catched: fail.")
+    else:
+        print("Input accepted: success.")
+
+    print()
+
+    # Tests from subject
+    print("\n4. Tests from subject")
+    print("\n4.1 First test main")
     bank = Bank()
     bank.add(Account(
         'Smith Jane',
@@ -138,10 +389,8 @@ if __name__ == "__main__":
         print('Failed')
     else:
         print('Success')
-    print()
 
-
-    print("\n2. Second test main")
+    print("\n4.2 Second test main")
     bank = Bank()
     bank.add(Account(
         'Smith Jane',
