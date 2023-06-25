@@ -1,7 +1,6 @@
 from ft_map import ft_map
 from ft_filter import ft_filter
 from ft_reduce import ft_reduce
-from math import sqrt
 import functools
 
 def filter_test(elem):
@@ -9,15 +8,30 @@ def filter_test(elem):
     else: return False
 
 if __name__ == '__main__':
-    print("\nTest ft_map:")
+
+    # ft_map()
+    print("\n1. ft_map()")
+
+    print("\n1.1 Basic")
     it = [1, 2, 3, 4, 5, 6]
-    for item in ft_map(sqrt, it):
-        print(item)
-    print("\nTest ft_filter:")
+    for item in ft_map(lambda a: a*a, it):
+        print(str(item) + ' ', end='')
+    print()
+
+    print("\n1.2 Error management")
+    if ft_map(lambda a: a*a, None) is None: print("Success")
+    else: print("KO")
+
+    # ft_filter()
+    print("\n2. ft_filter():")
+
+    print("\n2.1 Basic")
     it = [1, 2, 3, 4, 5, 6]
     for item in ft_filter(filter_test, it):
-        print(item)
-    print("\nTest ft_filter:")
+        print(str(item) + ' ', end='')
+    print()
+
+    print("\n3. ft_filter():")
     it = [1, 2, 3, 4, 5, 6]
     print(ft_reduce(lambda a,b: a+b, it))
     print(functools.reduce(lambda a,b: a+b, it))

@@ -8,9 +8,10 @@ def ft_reduce(function_to_apply, iterable):
     None if the iterable can not be used by the function.
     """
     try:
-        for i, item in enumerate(iterable):
-            if i: ret = function_to_apply(ret, item)
-            else: ret = item
+        it = iter(iterable)
+        ret = next(it)
+        for item in it:
+            ret = function_to_apply(ret, item)
         return ret
     except:
         return None

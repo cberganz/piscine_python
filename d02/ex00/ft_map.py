@@ -1,3 +1,5 @@
+from collections.abc import Iterable
+
 def ft_map(function_to_apply, iterable):
     """Map the function to all elements of the iterable.
     Args:
@@ -8,7 +10,8 @@ def ft_map(function_to_apply, iterable):
     None if the iterable can not be used by the function.
     """
     try:
-        for item in iterable:
-            yield function_to_apply(item)
+        it = iter(iterable)
     except:
         return None
+    for item in it:
+        yield function_to_apply(item)

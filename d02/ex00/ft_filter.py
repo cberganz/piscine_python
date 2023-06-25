@@ -12,4 +12,4 @@ def ft_filter(function_to_apply, iterable):
             if function_to_apply(item):
                 yield item
     except:
-        return None
+        yield None
