@@ -30,10 +30,10 @@ class CsvReader():
             return self
         except FileNotFoundError:
             print("File not found.")
-            return False
+            return None
         except Exception as e:
             print(f"Error: {e}")
-            return False
+            return None
 
     def __exit__(self, exc_type, exc_val, exc_tb):
         if self.file:
